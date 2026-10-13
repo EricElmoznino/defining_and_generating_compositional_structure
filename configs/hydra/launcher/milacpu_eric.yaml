@@ -1,0 +1,14 @@
+defaults:
+  - submitit_slurm
+
+partition: long-cpu
+cpus_per_task: 50
+tasks_per_node: 1
+mem_gb: 64
+timeout_min: 1440  # 24 hours
+array_parallelism: 20
+
+setup:
+  - "ulimit -n 8192"
+  - "module --quiet load miniconda/3"
+  - "conda activate compositionality"

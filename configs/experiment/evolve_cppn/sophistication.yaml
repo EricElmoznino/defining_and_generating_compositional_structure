@@ -1,0 +1,68 @@
+name: "evolve_cppn_sophistication"
+
+task:
+  _target_: tasks.evolve_cppn.EvolutionaryOptimizationCPPN
+  vocab_size: 4
+  spatial_shape: [64, 64]
+  n_channels: 3
+  pop_size: 200
+  output_encoding: "quantized_scalar"
+  use_positional_encoding: False
+  n_workers: 1
+  reward_batch_size: ${.pop_size}
+  reward_device: "cuda"
+  n_logged_examples: 10
+  log_examples_every_n_generations: 10
+  neat_verbose: True
+  checkpoint_root: ${save_dir}/evolve_cppn_checkpoints
+  checkpoint_interval_generations: 1
+  checkpoint_interval_seconds: null
+  resume_run_id: null
+  reward:
+    _target_: rewards.sophistication.SophisticationReward
+    two_part_code:
+      _target_: two_part_codes.cppn.CPPNMLPTwoPartCode
+      vocab_size: ${...vocab_size}
+      hidden_dim: 32
+      num_hidden_layers: 3
+      activation: "identity sigmoid tanh gauss"
+      dropout: 0.0
+      use_positional_encoding: ${...use_positional_encoding}
+      use_shared_coordinates: False
+      validation_fraction: 0.5
+      validation_mode: "random"
+      max_steps: 250
+      min_steps: 10
+      eval_every: 5
+      patience_evals: 8
+      lr: 4e-3
+      weight_decay: 1e-4
+      coordinate_batch_size: null
+      min_relative_improvement_over_constant: 0.02
+      min_absolute_improvement_bits: 0.02
+      complexity_samples_scale: 1.0
+      device: ${...reward_device}
+  neat_config_overrides:
+    NEAT:
+      fitness_threshold: 1e9
+    DefaultGenome:
+      activation_default: tanh
+      activation_options: ${...reward.two_part_code.activation}
+      activation_mutate_rate: 0.12
+      initial_connection: "full_direct"
+      conn_add_prob: 0.35
+      conn_delete_prob: 0.08
+      node_add_prob: 0.25
+      node_delete_prob: 0.05
+      weight_mutate_power: 0.75
+      bias_mutate_power: 0.75
+    DefaultSpeciesSet:
+      compatibility_threshold: 2.8
+    DefaultStagnation:
+      max_stagnation: 30
+      species_elitism: 3
+    DefaultReproduction:
+      elitism: 2
+      survival_threshold: 0.25
+
+n_generations: 10000

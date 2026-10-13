@@ -1,0 +1,32 @@
+name: "evolve_string_debug"
+
+task:
+  _target_: tasks.evolve_string.EvolutionaryOptimizationString
+  vocab_size: 10
+  string_length: 10
+  n_workers: 1
+  n_logged_examples: 20
+  log_examples_every_n_generations: 100
+  n_expensive_metric_samples: 100
+  log_expensive_metrics_every_n_generations: 50
+  reward:
+    _target_: rewards.debug.ToyRewardModes
+    vocab_size: ${..vocab_size}
+    string_length: ${..string_length}
+    n_modes: 4
+
+algorithm:
+  _target_: pymoo.algorithms.moo.nsga2.NSGA2
+  pop_size: 1000
+  n_offsprings: 500
+  sampling:
+    _target_: pymoo.operators.sampling.rnd.IntegerRandomSampling
+  crossover:
+    _target_: pymoo.operators.crossover.pntx.TwoPointCrossover
+    prob: 0.9
+  mutation:
+    _target_: lib.mutations.IntegerRandomResetMutation
+    prob: ${ast_eval:'2 / ${...task.string_length}'}
+  eliminate_duplicates: True
+
+n_generations: 500

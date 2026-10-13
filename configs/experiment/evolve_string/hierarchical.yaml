@@ -1,0 +1,40 @@
+name: "evolve_string_hierarchical"
+
+task:
+  _target_: tasks.evolve_string.EvolutionaryOptimizationString
+  vocab_size: 8
+  string_length: 128
+  n_workers: -1
+  n_logged_examples: 3
+  log_examples_every_n_generations: 100
+  n_expensive_metric_samples: 100
+  log_expensive_metrics_every_n_generations: 50
+  reward:
+    _target_: rewards.decomposition_level_mean.DecompositionLevelMeanReward
+    two_part_code:
+      _target_: two_part_codes.deterministic_grammar.DeterministicGrammarRePairTwoPartCode
+      start_at_zero: True
+    conditional_compressor:
+      _target_: conditional_compressors.deterministic_grammar.DeterministicGrammarPatternMatchingConditionalCompressor
+      device: cpu
+    decomposition:
+      _target_: decompositions.hierarchical.HierarchicalDecomposition
+      min_part_size: 4
+    normalize_by_part_size: True
+    p: 0.75
+
+algorithm:
+  _target_: pymoo.algorithms.moo.nsga2.NSGA2
+  pop_size: 10000
+  n_offsprings: 5000
+  sampling:
+    _target_: pymoo.operators.sampling.rnd.IntegerRandomSampling
+  crossover:
+    _target_: pymoo.operators.crossover.pntx.TwoPointCrossover
+    prob: 0.9
+  mutation:
+    _target_: lib.mutations.IntegerRandomResetMutation
+    prob: ${ast_eval:'2 / ${...task.string_length}'}
+  eliminate_duplicates: True
+
+n_generations: 2000
